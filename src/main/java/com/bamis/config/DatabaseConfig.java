@@ -10,5 +10,9 @@ public class DatabaseConfig {
     public static EntityManagerFactory getEntityManagerFactory() {
         return emf;
     }
+    // Méthode pour vider le cache JPA/Hibernate
+    public static void clearCache() {
+        emf.getCache().evictAll();
+    }
 }
 
