@@ -36,14 +36,46 @@ public class UserServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login.jsp");
             return;
         }
-        if ("ajout".equals(request.getParameter("action"))) {
+        String action = request.getParameter("action");
+
+        if ("ajout".equals(action)) {
             request.getRequestDispatcher("/addUser.jsp").forward(request, response);
             return;
+        } else if ("delete".equals(request.getParameter("action"))) {
+            Long id = Long.valueOf(request.getParameter("id"));
+            userDao.deleteUser(id);
+
+            List<User> users = userDao.findAllUsers();
+            request.setAttribute("users", users);
+
+            request.getRequestDispatcher("/home.jsp").forward(request, response);
+            return;
+        } else if ("edit".equals(action)) {
+            String idParam = request.getParameter("id");
+            if (idParam != null) {
+                Long id = Long.valueOf(idParam);
+                User editUser = userDao.findUserById(id);
+                if (editUser != null) {
+                    request.setAttribute("editUser", editUser);
+                    request.getRequestDispatcher("/editUser.jsp").forward(request, response);
+                    return;
+                }
+            }
+            request.setAttribute("error", "Utilisateur non trouvé");
+            request.getRequestDispatcher("/home.jsp").forward(request, response);
+            return;
+        } else if ("logout".equals(action)) {
+            session.invalidate();
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
         }
+
+        // Cas par défaut : afficher les utilisateurs
         List<User> users = userDao.findAllUsers();
         request.setAttribute("users", users);
         request.getRequestDispatcher("/home.jsp").forward(request, response);
     }
+
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -61,10 +93,32 @@ public class UserServlet extends HttpServlet {
                 userDao.saveUser(username, password);
                 response.sendRedirect(request.getContextPath() + "/login.jsp");
             } catch (Exception e) {
-                logger.error("Erreur lors de l'enregistrement de l'utilisateur", e);
                 request.setAttribute("error", "Erreur lors de l'enregistrement de l'utilisateur");
                 request.getRequestDispatcher("/register.jsp").forward(request, response);
             }
+            return;
+        } // Corrige le bloc "update" dans doPost
+        else if ("update".equals(request.getParameter("action"))) {
+            String idParam = request.getParameter("id");
+            if (idParam == null) {
+                request.setAttribute("error", "ID utilisateur manquant");
+                request.getRequestDispatcher("/home.jsp").forward(request, response);
+                return;
+            }
+            Long id = Long.valueOf(idParam);
+            User editedUser = userDao.findUserById(id);
+            if (editedUser == null) {
+                request.setAttribute("error", "Utilisateur non trouvé");
+                request.getRequestDispatcher("/home.jsp").forward(request, response);
+                return;
+            }
+            String username = request.getParameter("username");
+            String password = request.getParameter("password");
+            editedUser.setUsername(username);
+            editedUser.setPassword(password);
+            userDao.updateUser(editedUser.getId(), editedUser.getUsername(), editedUser.getPassword());
+            request.setAttribute("edited", editedUser);
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
             return;
         }
         String username = request.getParameter("username");

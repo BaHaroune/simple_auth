@@ -6,6 +6,14 @@
 </head>
 <body>
 <h2>Modifier l'utilisateur</h2>
+<c:choose>
+    <c:when test="${not empty error}">
+        <div style="color: red;">${error}</div>
+    </c:when>
+    <c:otherwise>
+        <div style="color: green;">Utilisateur modifié avec succès.</div>
+    </c:otherwise>
+</c:choose>
 <form action="${pageContext.request.contextPath}/login" method="post">
     <input type="hidden" name="action" value="update"/>
     <input type="hidden" name="id" value="${editUser.id}" />
